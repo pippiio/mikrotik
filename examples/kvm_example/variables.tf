@@ -26,10 +26,3 @@ variable "router_admin_password" {
   sensitive   = true
   nullable    = false
 }
-
-variable "openvpn_admin_account_secret" {
-  description = "The password required to login admin to the openvpn server"
-  type        = string
-  sensitive   = true
-  nullable    = false
-}

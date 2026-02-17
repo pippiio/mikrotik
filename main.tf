@@ -123,26 +123,28 @@ resource "routeros_interface_bridge_port" "cloud" {
   interface = "${each.value}"
 }
 
+resource "routeros_interface_list" "lan" {
+  name = "LAN"
+}
+
 resource "routeros_interface_list_member" "lan" {
   interface = routeros_interface_bridge.cloud.name
   list      = "LAN"
 }
 
-data "routeros_interfaces" "interface_wan" {
-    filter = {
-      name = "WAN"
-    }
+resource "routeros_ip_address" "lan" {
+  address = "192.168.88.1/24"
+  interface = routeros_interface_bridge.cloud.name
+  network = "192.168.88.0"
 }
 
 resource "routeros_interface_list" "list" {
   name = "WAN"
-  count     = length(data.routeros_interfaces.interface_wan.interfaces) == 0 ? 1 : 0
 }
 
 resource "routeros_interface_list_member" "wan" {
   interface = var.routing.interface_used_as_wan
   list      = "WAN"
-  count     = length(data.routeros_interfaces.interface_wan.interfaces) == 0 ? 1 : 0
 }
 
 resource "routeros_ip_address" "cloud_ips" {

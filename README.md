@@ -46,23 +46,23 @@ module "mikrotik" {
 
 ## Target configuration
 
-In the above example the router will be setup to NAT connections from port 2, 3 and 4 to port 1.
-Port 1 will be the WAN port. On the WAN port only WireGuard traffic will be allowed. This means that WireGuard is required to manage the router.
+In the above example, the router will be set up to NAT connections from ports 2, 3, and 4 to port 1.
+Port 1 will be the WAN port. On the WAN port, only WireGuard traffic will be allowed. This means that WireGuard is required to manage the router.
 
-The Kubernetes nodes will run on ports 2, 3 and 4. They will have IPs in the range 10.25.0.10 - 10.25.0.1 and use 10.25.0.1 as gateway.
-An admin IP range 192.168.88.0/24 will be configured with access from WireGuard. The router will accept connections on IP 192.168.88.1 but will also accept connections on 10.25.0.1 . 
+The Kubernetes nodes will run on ports 2, 3, and 4. They will have IPs in the range 10.25.0.1 – 10.25.0.10 and use 10.25.0.1 as the gateway.
+An admin IP range 192.168.88.0/24 will be configured with access from WireGuard. The router will accept connections on IP 192.168.88.1 but will also accept connections on 10.25.0.1.
 
-BGP ( Border Gateway Protocol ) will be activated on the Kubernetes ports.
+BGP (Border Gateway Protocol) will be activated on the Kubernetes ports.
 
 ## Inputs
 
 | Name | Description | Default | Required |
 |------|-------------|---------|:--------:|
-| <a name="input_router_admin_password"></a> [router\_admin\_password](#input\_router\_admin\_password) | The password for the admin user on the MikroTek device | n/a | yes |
-| <a name="input_router_admin_username"></a> [router\_admin\_username](#input\_router\_admin\_username) | The username for the admin user on the MikroTek device | `"admin"` | no |
-| <a name="input_router_insecure_first_run"></a> [router\_insecure\_first\_run](#input\_router\_insecure\_first\_run) | Set to true during first provision to prevent terraform to lock it self out | `false` | no |
-| <a name="input_routing"></a> [routing](#input\_routing) | This descripes a configuration of a MikroTek router for supporting a Kubernetes cluster<br/><br/>router\_name                : Name ( and hostname ) of router (string)<br/>router\_domain              : Domain name of router. Will be used with router\_name when creating certificates (string)<br/>router\_admin\_ip            : IP of router on routers admin network (Default: "192.168.88.1")<br/>router\_admin\_network       : IP of network used for administration (Default: "192.168.88.0")<br/>router\_admin\_network\_size  : Subnet size of admin network (string)<br/>router\_country             : Country code to use in certificates, eg DK (string)<br/>router\_organization        : Name of organization to use in certificates (string)<br/>router\_ca\_certificate\_file : Filename of ca certificate, eg certificates/ca.pem (string)<br/>dns\_servers                : List of DNS servers this cluster will use (Default: ["1.1.1.1", "1.0.0.1"])<br/>cloud\_name                 : Name of cloud, eg. odea-cloud (string)<br/>node\_ip\_pool               : IP range used by nodes in Kubernetes cluster (Default: ["10.25.0.10-10.25.0.14"])<br/>cluster\_gateway\_ip         : IP of router in Kubernetes network used as gateway (Default: "10.25.0.1")<br/>cluster\_network\_address    : IP address of internal network used by Kubernetes (Default: "10.25.0.0")<br/>cluster\_subnet\_size        : Subnet size internal network used by Kubernetes (Default: "24")<br/>interface\_used\_by\_cluster  : The set of interfaces used by the cluster, eg ether1 (string)<br/>interface\_used\_as\_wan      : The WAN interface, eg ether13 (string) | n/a | yes |
-| <a name="input_wireguard"></a> [wireguard](#input\_wireguard) | This section descripes the WireGuard configuration on the router<br/><br/>gateway\_ip : IP of the router in the VPN network (Default: "10.3.254.1")<br/>network\_ip : Network IP of VPN network (Default: "10.3.254.0")<br/>network\_size : Subnet size of VPN network (Default: "24")<br/>peer         : Descripes the peer to expect VPN connections from (Default {}) | n/a | yes |
+| <a name="input_router_admin_password"></a> [router\_admin\_password](#input\_router\_admin\_password) | The password for the admin user on the MikroTik device. | n/a | yes |
+| <a name="input_router_admin_username"></a> [router\_admin\_username](#input\_router\_admin\_username) | The username for the admin user on the MikroTik device. | `"admin"` | no |
+| <a name="input_router_insecure_first_run"></a> [router\_insecure\_first\_run](#input\_router\_insecure\_first\_run) | Set to true during first provision to prevent Terraform from locking itself out. | `false` | no |
+| <a name="input_routing"></a> [routing](#input\_routing) | This describes the configuration of a MikroTik router for supporting a Kubernetes cluster.<br/><br/>router\_name                : Name (and hostname) of the router (string)<br/>router\_domain              : Domain name of the router. Will be used with router\_name when creating certificates (string)<br/>router\_admin\_ip            : IP of the router on the router's admin network (Default: "192.168.88.1")<br/>router\_admin\_network       : IP of the network used for administration (Default: "192.168.88.0")<br/>router\_admin\_subnet\_size   : Subnet size of the admin network (string)<br/>router\_country             : Country code to use in certificates, e.g., DK (string)<br/>router\_organization        : Name of organization to use in certificates (string)<br/>router\_ca\_certificate\_file : Filename of the CA certificate, e.g., certificates/ca.pem (string)<br/>dns\_servers                : List of DNS servers this cluster will use (Default: ["1.1.1.1", "1.0.0.1"])<br/>cloud\_name                 : Name of the cloud, e.g., odea-cloud (string)<br/>node\_ip\_pool               : IP range used by nodes in the Kubernetes cluster (Default: ["10.25.0.10-10.25.0.14"])<br/>cluster\_gateway\_ip         : IP of the router in the Kubernetes network used as the gateway (Default: "10.25.0.1")<br/>cluster\_network\_address    : IP address of the internal network used by Kubernetes (Default: "10.25.0.0")<br/>cluster\_subnet\_size        : Subnet size of the internal network used by Kubernetes (Default: "24")<br/>interfaces\_used\_by\_cluster : The set of interfaces used by the cluster, e.g., ether1 (set(string))<br/>interface\_used\_as\_wan      : The WAN interface, e.g., ether13 (string) | n/a | yes |
+| <a name="input_wireguard"></a> [wireguard](#input\_wireguard) | This section describes the WireGuard configuration on the router.<br/><br/>gateway\_ip   : IP of the router in the VPN network (Default: "10.3.254.1")<br/>network\_ip   : Network IP of the VPN network (Default: "10.3.254.0")<br/>network\_size : Subnet size of the VPN network (Default: "24")<br/>peer         : Describes the peers to expect VPN connections from (Default: {}) | n/a | yes |
 
 ## Modules
 
@@ -74,6 +74,7 @@ No modules.
 |------|------|
 | [routeros_interface_bridge.cloud](https://registry.terraform.io/providers/terraform-routeros/routeros/latest/docs/resources/interface_bridge) | resource |
 | [routeros_interface_bridge_port.cloud](https://registry.terraform.io/providers/terraform-routeros/routeros/latest/docs/resources/interface_bridge_port) | resource |
+| [routeros_interface_list.lan](https://registry.terraform.io/providers/terraform-routeros/routeros/latest/docs/resources/interface_list) | resource |
 | [routeros_interface_list.list](https://registry.terraform.io/providers/terraform-routeros/routeros/latest/docs/resources/interface_list) | resource |
 | [routeros_interface_list_member.lan](https://registry.terraform.io/providers/terraform-routeros/routeros/latest/docs/resources/interface_list_member) | resource |
 | [routeros_interface_list_member.wan](https://registry.terraform.io/providers/terraform-routeros/routeros/latest/docs/resources/interface_list_member) | resource |
@@ -81,6 +82,7 @@ No modules.
 | [routeros_interface_wireguard.wireguard](https://registry.terraform.io/providers/terraform-routeros/routeros/latest/docs/resources/interface_wireguard) | resource |
 | [routeros_interface_wireguard_peer.wireguard_peer](https://registry.terraform.io/providers/terraform-routeros/routeros/latest/docs/resources/interface_wireguard_peer) | resource |
 | [routeros_ip_address.cloud_ips](https://registry.terraform.io/providers/terraform-routeros/routeros/latest/docs/resources/ip_address) | resource |
+| [routeros_ip_address.lan](https://registry.terraform.io/providers/terraform-routeros/routeros/latest/docs/resources/ip_address) | resource |
 | [routeros_ip_address.wireguard_ip](https://registry.terraform.io/providers/terraform-routeros/routeros/latest/docs/resources/ip_address) | resource |
 | [routeros_ip_dhcp_server.dhcp](https://registry.terraform.io/providers/terraform-routeros/routeros/latest/docs/resources/ip_dhcp_server) | resource |
 | [routeros_ip_dhcp_server_network.dhcp_server_network](https://registry.terraform.io/providers/terraform-routeros/routeros/latest/docs/resources/ip_dhcp_server_network) | resource |
@@ -102,7 +104,6 @@ No modules.
 | [routeros_routing_bgp_template.k8s_template](https://registry.terraform.io/providers/terraform-routeros/routeros/latest/docs/resources/routing_bgp_template) | resource |
 | [routeros_system_certificate.tls_cert](https://registry.terraform.io/providers/terraform-routeros/routeros/latest/docs/resources/system_certificate) | resource |
 | [routeros_system_identity.id](https://registry.terraform.io/providers/terraform-routeros/routeros/latest/docs/resources/system_identity) | resource |
-| [routeros_interfaces.interface_wan](https://registry.terraform.io/providers/terraform-routeros/routeros/latest/docs/data-sources/interfaces) | data source |
 | [routeros_ip_firewall.fw](https://registry.terraform.io/providers/terraform-routeros/routeros/latest/docs/data-sources/ip_firewall) | data source |
 | [routeros_system_resource.system](https://registry.terraform.io/providers/terraform-routeros/routeros/latest/docs/data-sources/system_resource) | data source |
 
@@ -110,7 +111,8 @@ No modules.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_version"></a> [version](#output\_version) | shows the version of the MikroTik router |
+| <a name="output_i"></a> [i](#output\_i) | n/a |
+| <a name="output_version"></a> [version](#output\_version) | Shows the version of the MikroTik router |
 
 ## First run
 
@@ -124,11 +126,13 @@ echo "router_admin_password = \"$(openssl rand -base64 32)\"" > terraform.tfvars
 cat terraform.tfvars
 ```
 
-It is useful to use DHCP to give the router an IP when you set it up the first time. Configure the WAN port to get an IP from dhcp like this:
+It is useful to use DHCP to give the router an IP when you set it up for the first time. Configure the WAN port to get an IP from DHCP like this:
 
 ```
-/interface list member
-add interface=ether1 list=WAN
+/interface/list
+#add name="WAN"
+#/interface list member
+#add interface=ether1 list=WAN
 /ip dhcp-client
 add disabled=no interface=ether1
 print # This will show you the new IP of the router
@@ -147,27 +151,28 @@ provider "routeros" {
 
 Replace 192.168.122.158 in the above example with the IP from the router.
 
-To prevent Terraform from locking it self out you can use the router_insecure_first_run variable like this:
+To prevent Terraform from locking itself out, you can use the router_insecure_first_run variable like this:
 
 ```bash
+terraform init
 TF_VAR_router_insecure_first_run=true terraform apply
 ```
 
 This will set up everything except it will still allow you to manage the router without encryption and will not drop connections from the WAN port.
 
-After the first run, you can download the server CA certificate from the router and start using it though a secure connection.
+After the first run, you can download the server CA certificate from the router and start using it through a secure connection.
 
 ## Go secure
 
-First we need to setup a VPN connection with WireGuard. After that we will get
-the CA certificate from the router and store it on you computer for validating
+First, we need to set up a VPN connection with WireGuard. After that, we will get
+the CA certificate from the router and store it on your computer for validating
 the secure connections.
 
 ### Setup WireGuard
 
 The file `examples/kvm_example/setupWireGuard.bash` can help you create a WireGuard 
-configuration. As input it will need the a name of your configuration, the WAN
-ip of your router and the public key of the WireGuard interface in the router.
+configuration. As input, it will need the a name of your configuration, the WAN
+ip of your router, and the public key of the WireGuard interface in the router.
 
 Here is how to get the public key from the MikroTik router:
 
@@ -181,15 +186,15 @@ With that information you can now call the script like this:
 ./setupWireguard.bash kvm_example 192.168.122.158 dCw9QfDZeMrrVlmKwNlGbj24W+IVsFmvrs18WbyneHw=
 ```
 
-You will have to copy the configuration file to `/etc/wireguard/` folder
-and also modify the wireguard section of the module configuration. 
+You will have to copy the configuration file to the `/etc/wireguard/` folder
+and also modify the WireGuard section of the module configuration. 
 
-When connected though WireGuard the IP of the router will be `192.168.88.1`
+When connected though WireGuard, the IP of the router will be `192.168.88.1`.
 
 ### Get the CA certificate
 
-As we are using self-signed certificates the CA certificate is just the
-certificate of the router. Therefore we can just download the routers
+As we are using self-signed certificates, the CA certificate is just the
+certificate of the router. Therefore, we can just download the router's
 certificate, store it as ca.pem and assume it is the CA certificate.
 
 Download the certificate to a file:
@@ -201,7 +206,7 @@ echo | openssl s_client -connect 192.168.88.1:443 | openssl x509 > certificate/c
 
 ### Setup Terraform
 
-For Terraform to use the new secure connection we will need to update the `providers.tf`` file
+For Terraform to use the new secure connection, we will need to update the `providers.tf`` file
 
 Make it look like this:
 
@@ -214,23 +219,22 @@ provider "routeros" {
 }
 ```
 
-We can now rerun the terraform apply without the router_insecure_first_run variable:
+Now that we have connected to the router through a VPN and configured a secure
+connection to its API, we can rerun the terraform apply without the router_insecure_first_run variable:
 
 ```bash
 terraform apply
 ```
 
-How when we have connected to the router though a VPN and configured a secure
-connection to it API we can 
 
-## Disable dhcp on WAN interface
+## Disable DHCP on WAN interface
 
-Then you are done configuring the router you can set a fixed IP:
+When you are done configuring the router, you can set a fixed IP:
 
 ```
 /ip address
 add address=10.3.8.90/30 interface=ether13 network=10.3.8.88
 /ip dhcp-client
-add disabled=yes interface=ether1
+set [find interface=ether1] disabled=yes
 ```
 <!-- END_TF_DOCS -->

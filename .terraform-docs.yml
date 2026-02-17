@@ -56,8 +56,6 @@ content: |-
   It is useful to use DHCP to give the router an IP when you set it up for the first time. Configure the WAN port to get an IP from DHCP like this:
 
   ```
-  /interface list member
-  add interface=ether1 list=WAN
   /ip dhcp-client
   add disabled=no interface=ether1
   print # This will show you the new IP of the router
@@ -79,6 +77,7 @@ content: |-
   To prevent Terraform from locking itself out, you can use the router_insecure_first_run variable like this:
 
   ```bash
+  terraform init
   TF_VAR_router_insecure_first_run=true terraform apply
   ```
 
@@ -112,6 +111,13 @@ content: |-
   
   You will have to copy the configuration file to the `/etc/wireguard/` folder
   and also modify the WireGuard section of the module configuration. 
+
+  To apply the changes and start the connection do the following:
+
+  ```bash
+  TF_VAR_router_insecure_first_run=true terraform apply
+  sudo wg-quick up kvm_example
+  ```
 
   When connected though WireGuard, the IP of the router will be `192.168.88.1`.
 
