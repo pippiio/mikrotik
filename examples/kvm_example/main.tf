@@ -2,7 +2,6 @@ module "mikrotik" {
   source = "../../"
 
   router_insecure_first_run    = var.router_insecure_first_run
-  openvpn_admin_account_secret = var.openvpn_admin_account_secret
   router_admin_password        = var.router_admin_password
   routing = {
     router_name                = "kvmexample"

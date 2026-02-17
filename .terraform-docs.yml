@@ -1,0 +1,164 @@
+---
+formatter: "markdown table"
+
+header-from: main.tf
+
+settings:
+  type: false
+
+output:
+  file: "README.md"
+  mode: replace
+  template: |-
+    <!-- BEGIN_TF_DOCS -->
+    {{ .Content }}
+    <!-- END_TF_DOCS -->
+
+
+content: |-
+  {{ .Header }}
+
+  ## Example usage
+  ```hcl
+  {{ include "examples/kvm_example/main.tf" }}
+  ````
+
+  ## Target configuration
+
+  In the above example, the router will be set up to NAT connections from ports 2, 3, and 4 to port 1.
+  Port 1 will be the WAN port. On the WAN port, only WireGuard traffic will be allowed. This means that WireGuard is required to manage the router.
+
+  The Kubernetes nodes will run on ports 2, 3, and 4. They will have IPs in the range 10.25.0.1 – 10.25.0.10 and use 10.25.0.1 as the gateway.
+  An admin IP range 192.168.88.0/24 will be configured with access from WireGuard. The router will accept connections on IP 192.168.88.1 but will also accept connections on 10.25.0.1.
+
+  BGP (Border Gateway Protocol) will be activated on the Kubernetes ports.
+
+  {{ .Inputs }}
+
+  {{ .Modules }}
+
+  {{ .Resources }}
+
+  {{ .Outputs }}
+
+  ## First run
+
+  When you start a new and unconfigured MikroTik router it will not yet have any password or any IPs configured.
+
+  You can create a new secure password and have it stored to `terraform.tfvars` like this:
+
+  ```bash
+  # Warning this will overwrite your password if you run it twice
+  echo "router_admin_password = \"$(openssl rand -base64 32)\"" > terraform.tfvars
+  cat terraform.tfvars
+  ```
+
+  It is useful to use DHCP to give the router an IP when you set it up for the first time. Configure the WAN port to get an IP from DHCP like this:
+
+  ```
+  /interface list member
+  add interface=ether1 list=WAN
+  /ip dhcp-client
+  add disabled=no interface=ether1
+  print # This will show you the new IP of the router
+  ```
+
+  Then create a file called `providers.tf` with the following content:
+
+  ```hcl
+  provider "routeros" {
+    hosturl        = "http://192.168.122.158"
+    username       = var.router_admin_username
+    password       = var.router_admin_password
+    insecure = true
+  }
+  ```
+
+  Replace 192.168.122.158 in the above example with the IP from the router.
+
+  To prevent Terraform from locking itself out, you can use the router_insecure_first_run variable like this:
+
+  ```bash
+  TF_VAR_router_insecure_first_run=true terraform apply
+  ```
+
+  This will set up everything except it will still allow you to manage the router without encryption and will not drop connections from the WAN port.
+
+  After the first run, you can download the server CA certificate from the router and start using it through a secure connection.
+
+  ## Go secure
+  
+  First, we need to set up a VPN connection with WireGuard. After that, we will get
+  the CA certificate from the router and store it on your computer for validating
+  the secure connections.
+
+  ### Setup WireGuard
+
+  The file `examples/kvm_example/setupWireGuard.bash` can help you create a WireGuard 
+  configuration. As input, it will need the a name of your configuration, the WAN
+  ip of your router, and the public key of the WireGuard interface in the router.
+
+  Here is how to get the public key from the MikroTik router:
+
+  ```
+  /interface/wireguard print
+  ```
+
+  With that information you can now call the script like this:
+
+  ```bash
+  ./setupWireguard.bash kvm_example 192.168.122.158 dCw9QfDZeMrrVlmKwNlGbj24W+IVsFmvrs18WbyneHw=
+  ```
+  
+  You will have to copy the configuration file to the `/etc/wireguard/` folder
+  and also modify the WireGuard section of the module configuration. 
+
+  When connected though WireGuard, the IP of the router will be `192.168.88.1`.
+
+  ### Get the CA certificate
+  
+  As we are using self-signed certificates, the CA certificate is just the
+  certificate of the router. Therefore, we can just download the router's
+  certificate, store it as ca.pem and assume it is the CA certificate.
+
+  Download the certificate to a file:
+
+  ```bash
+  mkdir -p certificate
+  echo | openssl s_client -connect 192.168.88.1:443 | openssl x509 > certificate/ca.pem
+  ```
+
+  ### Setup Terraform
+  
+  For Terraform to use the new secure connection, we will need to update the `providers.tf`` file
+
+  Make it look like this:
+
+  ```hcl
+  provider "routeros" {
+    hosturl        = "https://${var.router_admin_ip}"
+    username       = var.router_admin_username
+    password       = var.router_admin_password
+    ca_certificate = var.router_ca_certificate_file
+  }
+  ```
+  
+  Now that we have connected to the router through a VPN and configured a secure
+  connection to its API, we can rerun the terraform apply without the router_insecure_first_run variable:
+
+  ```bash
+  terraform apply
+  ```
+
+
+  ## Disable DHCP on WAN interface
+
+  When you are done configuring the router, you can set a fixed IP:
+
+  ```
+  /ip address
+  add address=10.3.8.90/30 interface=ether13 network=10.3.8.88
+  /ip dhcp-client
+  set [find interface=ether1] disabled=yes
+  ```
+

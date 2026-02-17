@@ -1,3 +1,16 @@
+/**
+ * # MikroTik module
+ * 
+ * The is a generic Terraform module within the pippi.io family, maintained by
+ * Tech Chapter. The pippi.io modules are build to support common use cases
+ * often seen at Tech Chapters clients. They are created with best practices in
+ * mind and battle tested at scale. All modules are free and open-source under
+ * the Mozilla Public License Version 2.0.
+ * 
+ * The mikrotik module is made to provision and manage a MikroTik ethernet
+ * router to support an internal Kubernetes cluster.
+ */
+
 resource "routeros_system_identity" "id" {
   name = var.routing.router_name
 }
