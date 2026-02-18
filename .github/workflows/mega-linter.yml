@@ -27,7 +27,7 @@ jobs:
         # More info at https://megalinter.github.io/flavors/
         # uses: oxsecurity/megalinter@v6
         # v8.8:
-        uses: oxsecurity/megalinter/flavors/terraform@a0e14c04f606938f8ea7c4c10a0b2f5dc27c7e0fca12875594ca74fa48487447
+        uses: oxsecurity/megalinter/flavors/terraform@42bb470545e359597e7f12156947c436e4e3fb9a
         env:
           # All available variables are described in documentation
           # https://megalinter.github.io/configuration/
