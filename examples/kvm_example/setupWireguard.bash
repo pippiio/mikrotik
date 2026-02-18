@@ -1,25 +1,24 @@
 #!/usr/bin/env bash
 # This file is create to help setting up WireGuard peer connections
 
- 
 WireGuardConnectionName=$1
 WANIPofRouter=$2
 PublicKeyFromRouter=$3
 
 function syntax() {
-       echo "Syntax: $0 wireguard-connection-name WAN-IP-of-router public-key-from-router"
+  echo "Syntax: $0 wireguard-connection-name WAN-IP-of-router public-key-from-router"
 }
 
 if [[ "${PublicKeyFromRouter}" == "" ]]; then
-       syntax
-       exit 1
+  syntax
+  exit 1
 fi
 
 PrivateKey=$(wg genkey)
 PublicKey=$(echo "${PrivateKey}" | wg pubkey)
 WireGuardConnectionFileName=${WireGuardConnectionName}.conf
 
-cat <<EOL >${WireGuardConnectionFileName}
+cat <<EOL >"${WireGuardConnectionFileName}"
 [Interface]
 ListenPort = 51820
 PrivateKey = ${PrivateKey}

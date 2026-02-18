@@ -30,3 +30,6 @@ override.tf.json
 # example: *tfplan*
 
 **/*.pem
+
+# Megalinter
+megalinter-reports/*

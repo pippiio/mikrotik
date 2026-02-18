@@ -26,7 +26,8 @@ jobs:
         # You can override MegaLinter flavor used to have faster performances
         # More info at https://megalinter.github.io/flavors/
         # uses: oxsecurity/megalinter@v6
-        uses: oxsecurity/megalinter/flavors/terraform@v9
+        # v9:
+        uses: oxsecurity/megalinter/flavors/terraform@b38439f4563ac9400cd9e1833b428848f66bb0a0f1c531506a701479b80ded24
         env:
           # All available variables are described in documentation
           # https://megalinter.github.io/configuration/
@@ -35,7 +36,7 @@ jobs:
 
       # Upload MegaLinter artifacts
       - name: Archive production artifacts
-        if: ${{ success() }} || ${{ failure() }}
+        # if: ${{ success() }} || ${{ failure() }}
         uses: actions/upload-artifact@v6
         with:
           name: MegaLinter reports

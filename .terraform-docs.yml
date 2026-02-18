@@ -86,14 +86,14 @@ content: |-
   After the first run, you can download the server CA certificate from the router and start using it through a secure connection.
 
   ## Go secure
-  
+
   First, we need to set up a VPN connection with WireGuard. After that, we will get
   the CA certificate from the router and store it on your computer for validating
   the secure connections.
 
   ### Setup WireGuard
 
-  The file `examples/kvm_example/setupWireGuard.bash` can help you create a WireGuard 
+  The file `examples/kvm_example/setupWireGuard.bash` can help you create a WireGuard
   configuration. As input, it will need the a name of your configuration, the WAN
   ip of your router, and the public key of the WireGuard interface in the router.
 
@@ -108,9 +108,9 @@ content: |-
   ```bash
   ./setupWireguard.bash kvm_example 192.168.122.158 dCw9QfDZeMrrVlmKwNlGbj24W+IVsFmvrs18WbyneHw=
   ```
-  
+
   You will have to copy the configuration file to the `/etc/wireguard/` folder
-  and also modify the WireGuard section of the module configuration. 
+  and also modify the WireGuard section of the module configuration.
 
   To apply the changes and start the connection do the following:
 
@@ -122,7 +122,7 @@ content: |-
   When connected though WireGuard, the IP of the router will be `192.168.88.1`.
 
   ### Get the CA certificate
-  
+
   As we are using self-signed certificates, the CA certificate is just the
   certificate of the router. Therefore, we can just download the router's
   certificate, store it as ca.pem and assume it is the CA certificate.
@@ -135,7 +135,7 @@ content: |-
   ```
 
   ### Setup Terraform
-  
+
   For Terraform to use the new secure connection, we will need to update the `providers.tf`` file
 
   Make it look like this:
@@ -148,7 +148,7 @@ content: |-
     ca_certificate = var.router_ca_certificate_file
   }
   ```
-  
+
   Now that we have connected to the router through a VPN and configured a secure
   connection to its API, we can rerun the terraform apply without the router_insecure_first_run variable:
 
@@ -167,4 +167,3 @@ content: |-
   /ip dhcp-client
   set [find interface=ether1] disabled=yes
   ```
-
