@@ -14,7 +14,6 @@ output:
     {{ .Content }}
     <!-- END_TF_DOCS -->
 
-
 content: |-
   {{ .Header }}
 
