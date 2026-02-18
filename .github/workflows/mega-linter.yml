@@ -25,12 +25,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v6
 
-      - name: Add GitHub to known_hosts
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/known_hosts
-
       # MegaLinter
       - name: MegaLinter
         id: ml
