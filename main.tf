@@ -17,11 +17,11 @@ resource "routeros_system_identity" "id" {
 
 resource "routeros_ip_dns_forwarders" "dns_servers" {
   dns_servers = var.routing.dns_servers
-  name = "dns_servers"
+  name        = "dns_servers"
 }
 
 resource "routeros_ip_pool" "node_ip_pool" {
-  name = var.routing.cloud_name
+  name   = var.routing.cloud_name
   ranges = var.routing.node_ip_pool
 }
 
@@ -77,7 +77,7 @@ resource "routeros_routing_bgp_connection" "k8s_listener" {
   templates = [
     routeros_routing_bgp_template.k8s_template.name
   ]
-  instance  = routeros_routing_bgp_template.k8s_template.name
+  instance = routeros_routing_bgp_template.k8s_template.name
 }
 
 # Next 2 resouces are for 7.18 but nor supported in 7.20
@@ -120,7 +120,7 @@ resource "routeros_routing_bgp_connection" "k8s_listener" {
 resource "routeros_interface_bridge_port" "cloud" {
   bridge    = routeros_interface_bridge.cloud.name
   for_each  = var.routing.interfaces_used_by_cluster
-  interface = "${each.value}"
+  interface = each.value
 }
 
 resource "routeros_interface_list" "lan" {
@@ -133,9 +133,9 @@ resource "routeros_interface_list_member" "lan" {
 }
 
 resource "routeros_ip_address" "lan" {
-  address = "192.168.88.1/24"
+  address   = "192.168.88.1/24"
   interface = routeros_interface_bridge.cloud.name
-  network = "192.168.88.0"
+  network   = "192.168.88.0"
 }
 
 resource "routeros_interface_list" "list" {
@@ -154,20 +154,20 @@ resource "routeros_ip_address" "cloud_ips" {
 }
 
 resource "routeros_ip_dhcp_server_network" "dhcp_server_network" {
-  address   = "${var.routing.cluster_network_address}/${var.routing.cluster_subnet_size}"
+  address    = "${var.routing.cluster_network_address}/${var.routing.cluster_subnet_size}"
   gateway    = var.routing.cluster_gateway_ip
   dns_server = var.routing.dns_servers
   netmask    = var.routing.cluster_subnet_size
 }
 
 resource "routeros_ip_firewall_filter" "rule_border_gateway_protocol" {
-  comment     = "Allow Border Gateway Protocol"
-  action      = "accept"
-  chain       = "input"
-  dst_port    = "179"
-  protocol    = "tcp"
-  log         = false
-  log_prefix  = ""
+  comment    = "Allow Border Gateway Protocol"
+  action     = "accept"
+  chain      = "input"
+  dst_port   = "179"
+  protocol   = "tcp"
+  log        = false
+  log_prefix = ""
 }
 
 resource "routeros_ip_firewall_filter" "rule_allow_established" {
@@ -185,11 +185,11 @@ resource "routeros_ip_firewall_filter" "rule_drop_invalid" {
 }
 
 resource "routeros_ip_firewall_filter" "drop_all_other_wan" {
-  comment          = "Drop all other WAN input"
-  action           = "drop"
-  chain            = "input"
-  in_interface     = var.routing.interface_used_as_wan
-  disabled         = var.router_insecure_first_run ? true : false
+  comment      = "Drop all other WAN input"
+  action       = "drop"
+  chain        = "input"
+  in_interface = var.routing.interface_used_as_wan
+  disabled     = var.router_insecure_first_run ? true : false
 }
 
 resource "routeros_ip_firewall_nat" "nat" {

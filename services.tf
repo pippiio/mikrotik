@@ -5,14 +5,14 @@ locals {
 }
 
 resource "routeros_system_certificate" "tls_cert" {
-  name        = "api-server"
-  common_name = "${var.routing.router_name}.${var.routing.router_domain}"
+  name             = "api-server"
+  common_name      = "${var.routing.router_name}.${var.routing.router_domain}"
   subject_alt_name = "IP:${var.routing.router_admin_ip}"
-  days_valid  = 3650
-  country      = var.routing.router_country
-  organization = var.routing.router_organization
-  key_usage   = ["key-cert-sign", "crl-sign", "digital-signature", "key-agreement", "tls-server"]
-  key_size    = "prime256v1"
+  days_valid       = 3650
+  country          = var.routing.router_country
+  organization     = var.routing.router_organization
+  key_usage        = ["key-cert-sign", "crl-sign", "digital-signature", "key-agreement", "tls-server"]
+  key_size         = "prime256v1"
   sign {
   }
 }

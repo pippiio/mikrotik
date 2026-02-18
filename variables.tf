@@ -44,7 +44,7 @@ variable "wireguard" {
     gateway_ip   = optional(string, "10.3.254.1")
     network_ip   = optional(string, "10.3.254.0")
     network_size = optional(string, "24")
-    peer         = optional(map(object({
+    peer = optional(map(object({
       public_key = string
       ip_address = string
     })), {})
@@ -63,17 +63,4 @@ variable "router_insecure_first_run" {
   description = "Set to true during first provision to prevent Terraform from locking itself out."
   type        = bool
   default     = false
-}
-
-variable "router_admin_username" {
-  description = "The username for the admin user on the MikroTik device."
-  type        = string
-  default     = "admin"
-}
-
-variable "router_admin_password" {
-  description = "The password for the admin user on the MikroTik device."
-  type        = string
-  sensitive   = true
-  nullable    = false
 }

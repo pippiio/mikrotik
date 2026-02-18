@@ -5,13 +5,15 @@ variable "router_insecure_first_run" {
 }
 
 variable "router_ca_certificate_file" {
-  type = string
-  default = "certificate/ca.pem"
+  description = "Path to CA certificate used to verify the connection to the router"
+  type        = string
+  default     = "certificate/ca.pem"
 }
 
 variable "router_admin_ip" {
-  type = string
-  default = "192.168.88.1"
+  description = "The IP of the router in the admin network"
+  type        = string
+  default     = "192.168.88.1"
 }
 
 variable "router_admin_username" {

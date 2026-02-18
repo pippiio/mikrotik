@@ -7,20 +7,19 @@ WANIPofRouter=$2
 PublicKeyFromRouter=$3
 
 function syntax() {
-  echo Syntax: $0 wireguard-connection-name WAN-IP-of-router public-key-from-router
+       echo "Syntax: $0 wireguard-connection-name WAN-IP-of-router public-key-from-router"
 }
 
-if [[ "X${PublicKeyFromRouter}" == "X" ]]
-then
-  syntax
-  exit 1
+if [[ "${PublicKeyFromRouter}" == "" ]]; then
+       syntax
+       exit 1
 fi
 
 PrivateKey=$(wg genkey)
-PublicKey=$(echo ${PrivateKey} | wg pubkey)
+PublicKey=$(echo "${PrivateKey}" | wg pubkey)
 WireGuardConnectionFileName=${WireGuardConnectionName}.conf
 
-cat <<EOL > ${WireGuardConnectionFileName}
+cat <<EOL >${WireGuardConnectionFileName}
 [Interface]
 ListenPort = 51820
 PrivateKey = ${PrivateKey}
@@ -36,7 +35,7 @@ AllowedIPs = 0.0.0.0/0, ::/0
 Endpoint = ${WANIPofRouter}:51820
 EOL
 
-echo Update the WireGuard section of the mikrotik module in main.tf to look something like this:
+echo "Update the WireGuard section of the mikrotik module in main.tf to look something like this:"
 cat <<EOL
   wireguard = {
     peer = {
@@ -48,9 +47,9 @@ cat <<EOL
   }
 EOL
 echo
-echo Then run the terraform apply again to create your configuration as a peer in the router
+echo "Then run the terraform apply again to create your configuration as a peer in the router"
 echo
 
-echo A WireGuard configuration is save to a file named ${WireGuardConnectionFileName}
-echo Copy this file to /etc/wireguard/
-echo Then start the connection with \"wg-quick up ${WireGuardConnectionName}\"
+echo "A WireGuard configuration is save to a file named ${WireGuardConnectionFileName}"
+echo "Copy this file to /etc/wireguard/"
+echo "Then start the connection with \"wg-quick up ${WireGuardConnectionName}\""
