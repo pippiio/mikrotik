@@ -1,5 +1,5 @@
 module "mikrotik" {
-  source = "../../"
+  source = "git@github.com:pippiio/mikrotik?ref=cc68de556241ba9188b6661136ef383136a8eaf6"
 
   router_insecure_first_run    = var.router_insecure_first_run
   router_admin_password        = var.router_admin_password

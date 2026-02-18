@@ -13,7 +13,7 @@ router to support an internal Kubernetes cluster.
 ## Example usage
 ```hcl
 module "mikrotik" {
-  source = "../../"
+  source = "git@github.com:pippiio/mikrotik?ref=cc68de556241ba9188b6661136ef383136a8eaf6"
 
   router_insecure_first_run    = var.router_insecure_first_run
   router_admin_password        = var.router_admin_password
@@ -111,7 +111,6 @@ No modules.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_i"></a> [i](#output\_i) | n/a |
 | <a name="output_version"></a> [version](#output\_version) | Shows the version of the MikroTik router |
 
 ## First run
@@ -129,10 +128,6 @@ cat terraform.tfvars
 It is useful to use DHCP to give the router an IP when you set it up for the first time. Configure the WAN port to get an IP from DHCP like this:
 
 ```
-/interface/list
-#add name="WAN"
-#/interface list member
-#add interface=ether1 list=WAN
 /ip dhcp-client
 add disabled=no interface=ether1
 print # This will show you the new IP of the router
@@ -188,6 +183,13 @@ With that information you can now call the script like this:
 
 You will have to copy the configuration file to the `/etc/wireguard/` folder
 and also modify the WireGuard section of the module configuration. 
+
+To apply the changes and start the connection do the following:
+
+```bash
+TF_VAR_router_insecure_first_run=true terraform apply
+sudo wg-quick up kvm_example
+```
 
 When connected though WireGuard, the IP of the router will be `192.168.88.1`.
 
