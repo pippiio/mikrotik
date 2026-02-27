@@ -1,10 +1,11 @@
 resource "routeros_interface_wireguard" "wireguard" {
   name        = "wireguard"
   listen_port = "51820"
+  count = length(var.wireguard.peer) > 0 ? 1 : 0
 }
 
 resource "routeros_interface_wireguard_peer" "wireguard_peer" {
-  interface  = routeros_interface_wireguard.wireguard.name
+  interface  = routeros_interface_wireguard.wireguard[0].name
   for_each   = var.wireguard.peer
   name       = each.key
   public_key = each.value.public_key
@@ -15,13 +16,15 @@ resource "routeros_interface_wireguard_peer" "wireguard_peer" {
 
 resource "routeros_ip_address" "wireguard_ip" {
   address   = "${var.wireguard.gateway_ip}/${var.wireguard.network_size}"
-  interface = routeros_interface_wireguard.wireguard.name
+  interface = routeros_interface_wireguard.wireguard[0].name
   network   = var.wireguard.network_ip
+  count = var.wireguard.this_is_a_vpn ? 1 : 0
 }
 
 resource "routeros_interface_list_member" "wireguard_lan" {
-  interface = routeros_interface_wireguard.wireguard.name
+  interface = routeros_interface_wireguard.wireguard[0].name
   list      = "LAN"
+  count = var.wireguard.this_is_a_vpn ? 1 : 0
 }
 
 data "routeros_ip_firewall" "fw" {
@@ -32,6 +35,10 @@ data "routeros_ip_firewall" "fw" {
       in_interface = var.routing.interface_used_as_wan
     }
   }
+}
+
+output "firewall" {
+    value = data.routeros_ip_firewall.fw
 }
 
 resource "routeros_ip_firewall_filter" "rule_allow_wireguard" {

@@ -18,8 +18,17 @@ content: |-
   {{ .Header }}
 
   ## Example usage
+
+  Setting up router:
+
   ```hcl
   {{ include "examples/kvm_example/main.tf" }}
+  ````
+
+  Setting up a switch behind that router:
+
+  ```hcl
+  {{ include "examples/kvm_switch_example/main.tf" }}
   ````
 
   ## Target configuration
@@ -48,7 +57,7 @@ content: |-
 
   ```bash
   # Warning this will overwrite your password if you run it twice
-  echo "router_admin_password = \"$(openssl rand -base64 32)\"" > terraform.tfvars
+  echo "device_admin_password = \"$(openssl rand -base64 32)\"" > terraform.tfvars
   cat terraform.tfvars
   ```
 
@@ -56,7 +65,7 @@ content: |-
 
   ```
   /ip dhcp-client
-  add disabled=no interface=ether1
+  add interface=ether1
   print # This will show you the new IP of the router
   ```
 
@@ -65,19 +74,19 @@ content: |-
   ```hcl
   provider "routeros" {
     hosturl        = "http://192.168.122.158"
-    username       = var.router_admin_username
-    password       = var.router_admin_password
+    username       = var.device_admin_username
+    password       = var.device_admin_password
     insecure = true
   }
   ```
 
   Replace 192.168.122.158 in the above example with the IP from the router.
 
-  To prevent Terraform from locking itself out, you can use the router_insecure_first_run variable like this:
+  To prevent Terraform from locking itself out, you can use the device_insecure_first_run variable like this:
 
   ```bash
   terraform init
-  TF_VAR_router_insecure_first_run=true terraform apply
+  TF_VAR_device_insecure_first_run=true terraform apply
   ```
 
   This will set up everything except it will still allow you to manage the router without encryption and will not drop connections from the WAN port.
@@ -114,7 +123,7 @@ content: |-
   To apply the changes and start the connection do the following:
 
   ```bash
-  TF_VAR_router_insecure_first_run=true terraform apply
+  TF_VAR_device_insecure_first_run=true terraform apply
   sudo wg-quick up kvm_example
   ```
 
@@ -141,15 +150,22 @@ content: |-
 
   ```hcl
   provider "routeros" {
-    hosturl        = "https://${var.router_admin_ip}"
-    username       = var.router_admin_username
-    password       = var.router_admin_password
-    ca_certificate = var.router_ca_certificate_file
+    hosturl        = "https://${var.device_admin_ip}"
+    username       = var.device_admin_username
+    password       = var.device_admin_password
+    ca_certificate = var.device_ca_certificate_file
   }
   ```
 
+  If the device you are configuring is not on IP 192.168.88.1 in the admin network, 
+  you have to add the correct IP in `terraform.tfvars`. Like this:
+
+  ```bash
+  echo "device_admin_ip = \"192.168.88.2\"" >> terraform.tfvars
+  ````
+
   Now that we have connected to the router through a VPN and configured a secure
-  connection to its API, we can rerun the terraform apply without the router_insecure_first_run variable:
+  connection to its API, we can rerun the terraform apply without the device_insecure_first_run variable:
 
   ```bash
   terraform apply

@@ -1,16 +1,16 @@
 locals {
   tls_service     = { "api-ssl" = 8729, "www-ssl" = 443 }
-  disable_service = var.router_insecure_first_run ? {} : { "api" = 8728, "ftp" = 21, "telnet" = 23, "www" = 80 }
+  disable_service = var.device_insecure_first_run ? {} : { "api" = 8728, "ftp" = 21, "telnet" = 23, "www" = 80 }
   enable_service  = { "ssh" = 22, "winbox" = 8291 }
 }
 
 resource "routeros_system_certificate" "tls_cert" {
   name             = "api-server"
-  common_name      = "${var.routing.router_name}.${var.routing.router_domain}"
-  subject_alt_name = "IP:${var.routing.router_admin_ip}"
+  common_name      = "${var.cloud_settings.device_name}.${var.cloud_settings.certificate_domain}"
+  subject_alt_name = "IP:${var.cloud_settings.device_ip}"
   days_valid       = 3650
-  country          = var.routing.router_country
-  organization     = var.routing.router_organization
+  country          = var.cloud_settings.certificate_country
+  organization     = var.cloud_settings.certificate_organization
   key_usage        = ["key-cert-sign", "crl-sign", "digital-signature", "key-agreement", "tls-server"]
   key_size         = "prime256v1"
   sign {
