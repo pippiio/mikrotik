@@ -23,8 +23,8 @@ variable "cloud_settings" {
     certificate_organization        : Name of organization to use in certificates (string)
     certificate_ca_certificate_file : Filename of the CA certificate on your computer, e.g., certificates/ca.pem (string)
   EOL
-  
 }
+
 variable "routing" {
   default = {
     this_is_a_router      = false
@@ -58,7 +58,7 @@ variable "routing" {
 variable "switching" {
   type = object({
     interface_bonds = optional(map(object({
-      interfaces    = set(string)
+      interfaces = set(string)
     })), {})
   })
   description = <<-EOL

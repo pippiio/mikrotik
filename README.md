@@ -16,7 +16,7 @@ Setting up router:
 
 ```hcl
 module "mikrotik" {
-  source = "../../"
+  source = "git@github.com:pippiio/mikrotik?ref=88a6ed21eface6cc70436fc553a613b8ad86ce70"
 
   device_insecure_first_run = var.device_insecure_first_run
 
@@ -64,7 +64,7 @@ Setting up a switch behind that router:
 
 ```hcl
 module "mikrotik" {
-  source = "../../"
+  source = "git@github.com:pippiio/mikrotik?ref=88a6ed21eface6cc70436fc553a613b8ad86ce70"
 
   device_insecure_first_run = var.device_insecure_first_run
 
@@ -196,14 +196,14 @@ Then create a file called `providers.tf` with the following content:
 
 ```hcl
 provider "routeros" {
-  hosturl        = "http://192.168.122.158"
+  hosturl        = "<url_to_device>"
   username       = var.device_admin_username
   password       = var.device_admin_password
   insecure = true
 }
 ```
 
-Replace 192.168.122.158 in the above example with the IP from the router.
+Replace <url_to_device> in the above example with http:// and then the ip of the device.
 
 To prevent Terraform from locking itself out, you can use the device_insecure_first_run variable like this:
 
@@ -224,7 +224,7 @@ the secure connections.
 
 ### Setup WireGuard
 
-The file `examples/kvm_example/setupWireGuard.bash` can help you create a WireGuard
+The file `scripts/setupWireGuard.bash` can help you create a WireGuard
 configuration. As input, it will need the a name of your configuration, the WAN
 ip of your router, and the public key of the WireGuard interface in the router.
 
@@ -237,7 +237,7 @@ Here is how to get the public key from the MikroTik router:
 With that information you can now call the script like this:
 
 ```bash
-./setupWireguard.bash kvm_example 192.168.122.158 dCw9QfDZeMrrVlmKwNlGbj24W+IVsFmvrs18WbyneHw=
+../../scripts/setupWireguard.bash kvm_example 192.168.122.158 dCw9QfDZeMrrVlmKwNlGbj24W+IVsFmvrs18WbyneHw=
 ```
 
 You will have to copy the configuration file to the `/etc/wireguard/` folder
@@ -280,7 +280,7 @@ provider "routeros" {
 }
 ```
 
-If the device you are configuring is not on IP 192.168.88.1 in the admin network, 
+If the device you are configuring is not on IP 192.168.88.1 in the admin network,
 you have to add the correct IP in `terraform.tfvars`. Like this:
 
 ```bash
