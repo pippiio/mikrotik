@@ -1,13 +1,13 @@
 module "mikrotik" {
-  source = "../../"
+  source = "git@github.com:pippiio/mikrotik?ref=88a6ed21eface6cc70436fc553a613b8ad86ce70"
 
   device_insecure_first_run = var.device_insecure_first_run
-  device_admin_ip           = "192.168.88.2"
 
   cloud_settings = {
-    device_name = "kvm-sw"
-    device_ip = "192.168.88.2"
-    cluster_name = "kvm"
+    device_name                     = "kvm-sw"
+    device_ip                       = "192.168.88.2"
+    interface_used_as_admin         = "ether13"
+    cluster_name                    = "kvm"
     certificate_domain              = "techchapter.com"
     certificate_country             = "DK"
     certificate_organization        = "Tech Chapter ApS"
@@ -21,18 +21,17 @@ module "mikrotik" {
       "ether6",
       "ether7",
       "ether8",
-      "ether9"
+      "ether9",
+      "bond1"
     ]
   }
 
   switching = {
-    interface_used_as_admin = "ether13"
-    interface_bonds = [
-      {
-        name = "bond1",
-        interfaces =  ["ether10", "ether11"]
+    interface_bonds = {
+      "bond1" = {
+        interfaces = ["ether10", "ether11"]
       }
-    ]
+    }
   }
 
 }
