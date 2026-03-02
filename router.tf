@@ -1,20 +1,20 @@
 resource "routeros_ip_dns_forwarders" "dns_servers" {
   dns_servers = var.routing.dns_servers
   name        = "dns_servers"
-  count = var.routing.this_is_a_router ? 1 : 0
+  count       = var.routing.this_is_a_router ? 1 : 0
 }
 
 resource "routeros_ip_pool" "node_ip_pool" {
   name   = var.cloud_settings.cluster_name
   ranges = var.routing.node_ip_pool
-  count = var.routing.this_is_a_router ? 1 : 0
+  count  = var.routing.this_is_a_router ? 1 : 0
 }
 
 resource "routeros_ip_dhcp_server" "dhcp" {
   address_pool = routeros_ip_pool.node_ip_pool[0].name
   interface    = routeros_interface_bridge.cloud.name
   name         = var.cloud_settings.cluster_name
-  count = var.routing.this_is_a_router ? 1 : 0
+  count        = var.routing.this_is_a_router ? 1 : 0
 }
 
 # 7.20
@@ -22,7 +22,7 @@ resource "routeros_routing_bgp_instance" "bgp_instance" {
   name      = "${var.cloud_settings.cluster_name}-k8s"
   as        = 64100
   router_id = var.routing.cluster_gateway_ip
-  count = var.routing.this_is_a_router ? 1 : 0
+  count     = var.routing.this_is_a_router ? 1 : 0
 }
 
 resource "routeros_routing_bgp_template" "k8s_template" {
@@ -31,7 +31,7 @@ resource "routeros_routing_bgp_template" "k8s_template" {
   as               = 65100
   disabled         = false
   routing_table    = "main"
-  count = var.routing.this_is_a_router ? 1 : 0
+  count            = var.routing.this_is_a_router ? 1 : 0
 }
 
 resource "routeros_routing_bgp_connection" "k8s_listener" {
@@ -59,25 +59,25 @@ resource "routeros_routing_bgp_connection" "k8s_listener" {
     routeros_routing_bgp_template.k8s_template[0].name
   ]
   instance = routeros_routing_bgp_template.k8s_template[0].name
-  count = var.routing.this_is_a_router ? 1 : 0
+  count    = var.routing.this_is_a_router ? 1 : 0
 }
 
 resource "routeros_interface_list" "list" {
-  name = "WAN"
+  name  = "WAN"
   count = var.routing.this_is_a_router ? 1 : 0
 }
 
 resource "routeros_interface_list_member" "wan" {
   interface = var.routing.interface_used_as_wan
   list      = "WAN"
-  count = var.routing.this_is_a_router ? 1 : 0
+  count     = var.routing.this_is_a_router ? 1 : 0
 }
 
 resource "routeros_ip_address" "cloud_ips" {
   address   = "${var.routing.cluster_gateway_ip}/${var.routing.cluster_subnet_size}"
   interface = routeros_interface_bridge.cloud.name
   network   = var.routing.cluster_network_address
-  count = var.routing.this_is_a_router ? 1 : 0
+  count     = var.routing.this_is_a_router ? 1 : 0
 }
 
 resource "routeros_ip_dhcp_server_network" "dhcp_server_network" {
@@ -85,7 +85,7 @@ resource "routeros_ip_dhcp_server_network" "dhcp_server_network" {
   gateway    = var.routing.cluster_gateway_ip
   dns_server = var.routing.dns_servers
   netmask    = var.routing.cluster_subnet_size
-  count = var.routing.this_is_a_router ? 1 : 0
+  count      = var.routing.this_is_a_router ? 1 : 0
 }
 
 resource "routeros_ip_firewall_filter" "rule_border_gateway_protocol" {
@@ -96,7 +96,7 @@ resource "routeros_ip_firewall_filter" "rule_border_gateway_protocol" {
   protocol   = "tcp"
   log        = false
   log_prefix = ""
-  count = var.routing.this_is_a_router ? 1 : 0
+  count      = var.routing.this_is_a_router ? 1 : 0
 }
 
 # resource "routeros_ip_firewall_filter" "rule_k8s_to_internet" {
@@ -115,7 +115,7 @@ resource "routeros_ip_firewall_filter" "rule_allow_established" {
   action           = "accept"
   chain            = "input"
   connection_state = "established,related"
-  count = var.routing.this_is_a_router ? 1 : 0
+  count            = var.routing.this_is_a_router ? 1 : 0
 }
 
 resource "routeros_ip_firewall_filter" "rule_drop_invalid" {
@@ -123,7 +123,7 @@ resource "routeros_ip_firewall_filter" "rule_drop_invalid" {
   action           = "drop"
   chain            = "input"
   connection_state = "invalid"
-  count = var.routing.this_is_a_router ? 1 : 0
+  count            = var.routing.this_is_a_router ? 1 : 0
 }
 
 resource "routeros_ip_firewall_filter" "drop_all_other_wan" {
@@ -132,7 +132,7 @@ resource "routeros_ip_firewall_filter" "drop_all_other_wan" {
   chain        = "input"
   in_interface = var.routing.interface_used_as_wan
   disabled     = var.device_insecure_first_run ? true : false
-  count = var.routing.this_is_a_router ? 1 : 0
+  count        = var.routing.this_is_a_router ? 1 : 0
 }
 
 resource "routeros_ip_firewall_nat" "nat" {
@@ -141,5 +141,5 @@ resource "routeros_ip_firewall_nat" "nat" {
   out_interface_list = "WAN"
   log                = false
   log_prefix         = ""
-  count = var.routing.this_is_a_router ? 1 : 0
+  count              = var.routing.this_is_a_router ? 1 : 0
 }

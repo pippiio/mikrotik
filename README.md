@@ -16,14 +16,15 @@ Setting up router:
 
 ```hcl
 module "mikrotik" {
-  source = "git@github.com:pippiio/mikrotik?ref=cc68de556241ba9188b6661136ef383136a8eaf6"
+  source = "../../"
 
   device_insecure_first_run = var.device_insecure_first_run
 
   cloud_settings = {
-    device_name = "kvmexample"
-    device_ip = "192.168.88.1"
-    cluster_name = "kvmexample"
+    device_name                     = "kvmexample"
+    device_ip                       = "192.168.88.1"
+    interface_used_as_admin         = "kvmexample"
+    cluster_name                    = "kvmexample"
     certificate_domain              = "techchapter.com"
     certificate_country             = "DK"
     certificate_organization        = "Tech Chapter ApS"
@@ -36,16 +37,15 @@ module "mikrotik" {
 
   switching = {
     interface_used_as_admin = "ether1"
-    interface_bonds = [
-      {
-        name = "bond1",
+    interface_bonds = {
+      "bond1" = {
         interfaces = ["ether2", "ether3"]
       }
-    ]
+    }
   }
 
   routing = {
-    interface_used_as_wan      = "ether1"
+    interface_used_as_wan = "ether1"
   }
 
   wireguard = {
@@ -67,12 +67,12 @@ module "mikrotik" {
   source = "../../"
 
   device_insecure_first_run = var.device_insecure_first_run
-  device_admin_ip           = "192.168.88.2"
 
   cloud_settings = {
-    device_name = "kvm-sw"
-    device_ip = "192.168.88.2"
-    cluster_name = "kvm"
+    device_name                     = "kvm-sw"
+    device_ip                       = "192.168.88.2"
+    interface_used_as_admin         = "ether13"
+    cluster_name                    = "kvm"
     certificate_domain              = "techchapter.com"
     certificate_country             = "DK"
     certificate_organization        = "Tech Chapter ApS"
@@ -86,18 +86,17 @@ module "mikrotik" {
       "ether6",
       "ether7",
       "ether8",
-      "ether9"
+      "ether9",
+      "bond1"
     ]
   }
 
   switching = {
-    interface_used_as_admin = "ether13"
-    interface_bonds = [
-      {
-        name = "bond1",
-        interfaces =  ["ether10", "ether11"]
+    interface_bonds = {
+      "bond1" = {
+        interfaces = ["ether10", "ether11"]
       }
-    ]
+    }
   }
 
 }
@@ -117,11 +116,10 @@ BGP (Border Gateway Protocol) will be activated on the Kubernetes ports.
 
 | Name | Description | Default | Required |
 |------|-------------|---------|:--------:|
-| <a name="input_cloud_settings"></a> [cloud\_settings](#input\_cloud\_settings) | This describes the configuration of a MikroTik router that is common for devices used as routers and switches<br/><br/>device\_name                : Name (and hostname) of the MikroTik (string)<br/>device\_ip            : IP of the router on the router's admin network (Default: "192.168.88.1")<br/>cloud\_name                 : Name of the cloud, e.g., odea-cloud (string)<br/>certificate\_domain              : Domain name of the router. Will be used with router\_name when creating certificates (string)<br/>certificate\_country             : Country code to use in certificates, e.g., DK (string)<br/>certificate\_organization        : Name of organization to use in certificates (string)<br/>certificate\_ca\_certificate\_file : Filename of the CA certificate, e.g., certificates/ca.pem (string)<br/>interfaces\_used\_by\_cluster : The set of interfaces used by the cluster, e.g., ether1 (set(string))<br/>switch\_admin\_ip            : IP of the router on the router's admin network (Default: "192.168.88.1") | n/a | yes |
-| <a name="input_device_admin_ip"></a> [device\_admin\_ip](#input\_device\_admin\_ip) | n/a | `"192.168.88.1"` | no |
+| <a name="input_cloud_settings"></a> [cloud\_settings](#input\_cloud\_settings) | This describes the configuration of a MikroTik router that is common for devices used as routers and switches<br/><br/>device\_name                     : Name (and hostname) of the MikroTik device (string)<br/>device\_ip                       : IP of device on the admin network (Default: "192.168.88.1")<br/>interface\_used\_as\_admin         : Limit administration interfaces to a port, e.g. same as cloud\_name (string)<br/>cloud\_name                      : Name of the cloud, e.g., odea-cloud (string)<br/>interfaces\_used\_by\_cluster      : The set of interfaces used by the cluster, e.g., ["ether1"] (set(string))<br/>certificate\_domain              : Domain name of the device. Will be used with device\_name when creating certificates (string)<br/>certificate\_country             : Country code to use in certificates, e.g., DK (string)<br/>certificate\_organization        : Name of organization to use in certificates (string)<br/>certificate\_ca\_certificate\_file : Filename of the CA certificate on your computer, e.g., certificates/ca.pem (string) | n/a | yes |
 | <a name="input_device_insecure_first_run"></a> [device\_insecure\_first\_run](#input\_device\_insecure\_first\_run) | Set to true during first provision to prevent Terraform from locking itself out. | `false` | no |
-| <a name="input_routing"></a> [routing](#input\_routing) | This describes the configuration of a MikroTik router for supporting a Kubernetes cluster.<br/><br/>router\_domain              : Domain name of the router. Will be used with router\_name when creating certificates (string)<br/>router\_admin\_network       : IP of the network used for administration (Default: "192.168.88.0")<br/>router\_admin\_subnet\_size   : Subnet size of the admin network (string)<br/>dns\_servers                : List of DNS servers this cluster will use (Default: ["1.1.1.1", "1.0.0.1"])<br/>node\_ip\_pool               : IP range used by nodes in the Kubernetes cluster (Default: ["10.25.0.10-10.25.0.14"])<br/>cluster\_gateway\_ip         : IP of the router in the Kubernetes network used as the gateway (Default: "10.25.0.1")<br/>cluster\_network\_address    : IP address of the internal network used by Kubernetes (Default: "10.25.0.0")<br/>cluster\_subnet\_size        : Subnet size of the internal network used by Kubernetes (Default: "24")<br/>interface\_used\_as\_wan      : The WAN interface, e.g., ether13 (string) | <pre>{<br/>  "interface_used_as_wan": "",<br/>  "this_is_a_router": false<br/>}</pre> | no |
-| <a name="input_switching"></a> [switching](#input\_switching) | This section describtes configuration for a switch.<br/>The same MikroTik device can function as a router and a switch.<br/>But it can also only function as a switch.<br/><br/>interface\_used\_as\_admin : Limit administration interfaces to a port (Default: any)<br/>interface\_bonds : Create a new interface by bonding 2 fysical interfaces. (Default: {}) | n/a | yes |
+| <a name="input_routing"></a> [routing](#input\_routing) | This describes the configuration of a MikroTik router for supporting a Kubernetes cluster.<br/><br/>router\_admin\_network     : IP of the network used for administration (Default: "192.168.88.0")<br/>router\_admin\_subnet\_size : Subnet size of the admin network (string)<br/>dns\_servers              : List of DNS servers this cluster will use (Default: ["1.1.1.1", "1.0.0.1"])<br/>node\_ip\_pool             : IP range used by nodes in the Kubernetes cluster (Default: ["10.25.0.10-10.25.0.14"])<br/>cluster\_gateway\_ip       : IP of the router in the Kubernetes network used as the gateway (Default: "10.25.0.1")<br/>cluster\_network\_address  : IP address of the internal network used by Kubernetes (Default: "10.25.0.0")<br/>cluster\_subnet\_size      : Subnet size of the internal network used by Kubernetes (Default: "24")<br/>interface\_used\_as\_wan    : The WAN interface, e.g., ether13 (string) | <pre>{<br/>  "interface_used_as_wan": "",<br/>  "this_is_a_router": false<br/>}</pre> | no |
+| <a name="input_switching"></a> [switching](#input\_switching) | This section describtes configuration for a switch.<br/>The same MikroTik device can function as a router and a switch.<br/>But it can also only function as a switch.<br/><br/>interface\_bonds : Create a new interface by bonding 2 fysical interfaces. (Default: {}) | n/a | yes |
 | <a name="input_wireguard"></a> [wireguard](#input\_wireguard) | This section describes the WireGuard configuration on the router.<br/><br/>gateway\_ip   : IP of the router in the VPN network (Default: "10.3.254.1")<br/>network\_ip   : Network IP of the VPN network (Default: "10.3.254.0")<br/>network\_size : Subnet size of the VPN network (Default: "24")<br/>peer         : Describes the peers to expect VPN connections from (Default: {}) | <pre>{<br/>  "peer": {},<br/>  "this_is_a_vpn": false<br/>}</pre> | no |
 
 ## Modules
@@ -132,6 +130,7 @@ No modules.
 
 | Name | Type |
 |------|------|
+| [routeros_interface_bonding.bond](https://registry.terraform.io/providers/terraform-routeros/routeros/1.99/docs/resources/interface_bonding) | resource |
 | [routeros_interface_bridge.cloud](https://registry.terraform.io/providers/terraform-routeros/routeros/1.99/docs/resources/interface_bridge) | resource |
 | [routeros_interface_bridge_port.cloud](https://registry.terraform.io/providers/terraform-routeros/routeros/1.99/docs/resources/interface_bridge_port) | resource |
 | [routeros_interface_list.lan](https://registry.terraform.io/providers/terraform-routeros/routeros/1.99/docs/resources/interface_list) | resource |
@@ -171,7 +170,6 @@ No modules.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_firewall"></a> [firewall](#output\_firewall) | n/a |
 | <a name="output_version"></a> [version](#output\_version) | Shows the version of the MikroTik router |
 
 ## First run

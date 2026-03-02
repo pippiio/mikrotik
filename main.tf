@@ -15,31 +15,16 @@ resource "routeros_system_identity" "id" {
   name = var.cloud_settings.device_name
 }
 
-resource "routeros_interface_bridge" "cloud" {
-  name           = var.cloud_settings.cluster_name
-  arp            = "proxy-arp"
-  vlan_filtering = false
-}
-
-resource "routeros_interface_bridge_port" "cloud" {
-  bridge    = routeros_interface_bridge.cloud.name
-  for_each  = var.cloud_settings.interfaces_used_by_cluster
-  interface = each.value
-}
-
 resource "routeros_interface_list" "lan" {
   name = "LAN"
 }
 
 resource "routeros_interface_list_member" "lan" {
-  interface = routeros_interface_bridge.cloud.name
+  interface = var.cloud_settings.cluster_name
   list      = "LAN"
 }
 
 resource "routeros_ip_address" "lan" {
-  address   = "${var.cloud_settings.device_ip}/24"
-  interface = routeros_interface_bridge.cloud.name
-  network   = "192.168.88.0"
+  address   = "${var.cloud_settings.device_ip}/${var.routing.router_admin_subnet_size}"
+  interface = var.cloud_settings.interface_used_as_admin
 }
-
-
