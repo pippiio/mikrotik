@@ -1,5 +1,5 @@
 module "mikrotik" {
-  source = "git@github.com:pippiio/mikrotik?ref=88a6ed21eface6cc70436fc553a613b8ad86ce70"
+  source = "git@github.com:pippiio/mikrotik?ref=e6ac813b53644ff3f2840cfff334c0ffb3ca1294"
 
   device_insecure_first_run = var.device_insecure_first_run
 
