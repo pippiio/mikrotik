@@ -1,5 +1,5 @@
 module "mikrotik" {
-  source = "git@github.com:pippiio/mikrotik?ref=88a6ed21eface6cc70436fc553a613b8ad86ce70"
+  source = "git@github.com:pippiio/mikrotik?ref=3e016f0083b35d576ee24d1e3769f9c85ee9a0da"
 
   device_insecure_first_run = var.device_insecure_first_run
 
@@ -19,7 +19,6 @@ module "mikrotik" {
   }
 
   switching = {
-    interface_used_as_admin = "ether1"
     interface_bonds = {
       "bond1" = {
         interfaces = ["ether2", "ether3"]

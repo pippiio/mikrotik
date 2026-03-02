@@ -1,13 +1,13 @@
 module "mikrotik" {
-  source = "git@github.com:pippiio/mikrotik?ref=e6ac813b53644ff3f2840cfff334c0ffb3ca1294"
+  source = "git@github.com:pippiio/mikrotik?ref=3e016f0083b35d576ee24d1e3769f9c85ee9a0da"
 
   device_insecure_first_run = var.device_insecure_first_run
 
   cloud_settings = {
-    device_name                     = "kvm-sw"
+    device_name                     = "kvmexample-sw"
     device_ip                       = "192.168.88.2"
     interface_used_as_admin         = "ether13"
-    cluster_name                    = "kvm"
+    cluster_name                    = "kvmexample"
     certificate_domain              = "techchapter.com"
     certificate_country             = "DK"
     certificate_organization        = "Tech Chapter ApS"
