@@ -4,6 +4,11 @@ resource "routeros_ip_dns_forwarders" "dns_servers" {
   count       = var.routing.this_is_a_router ? 1 : 0
 }
 
+resource "routeros_ip_dns" "dns" {
+  allow_remote_requests = true
+  count                 = var.routing.this_is_a_router ? 1 : 0
+}
+
 resource "routeros_ip_pool" "node_ip_pool" {
   name   = var.cloud_settings.cluster_name
   ranges = var.routing.node_ip_pool
@@ -83,7 +88,7 @@ resource "routeros_ip_address" "cloud_ips" {
 resource "routeros_ip_dhcp_server_network" "dhcp_server_network" {
   address    = "${var.routing.cluster_network_address}/${var.routing.cluster_subnet_size}"
   gateway    = var.routing.cluster_gateway_ip
-  dns_server = var.routing.dns_servers
+  dns_server = var.routing.dhcp_dns_servers
   netmask    = var.routing.cluster_subnet_size
   count      = var.routing.this_is_a_router ? 1 : 0
 }
