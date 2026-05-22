@@ -16,8 +16,8 @@ module "mikrotik" {
 
   wan = {
     interface = "sfp-sfpplus4"
-    address   = "1.2.3.4/29"
-    gateway   = "1.2.3.3"
+    address   = "1.2.3.4/29" # Typically provided from your hosting provider
+    gateway   = "1.2.3.3"    # Typically provided from your hosting provider
     speed     = "1G-baseX"
   }
 
