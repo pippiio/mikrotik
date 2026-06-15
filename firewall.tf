@@ -27,7 +27,8 @@ resource "routeros_ip_firewall_filter" "allow" {
 
   chain         = "forward"
   action        = "accept"
-  src_address   = local.subnets[each.value.src]
+  in_interface  = each.value.src == "sites" ? routeros_interface_wireguard.sites[0].name : null
+  src_address   = each.value.src != "sites" ? local.subnets[each.value.src] : null
   dst_address   = !strcontains(each.value.dst, "wan") ? local.subnets[each.value.dst] : null
   out_interface = strcontains(each.value.dst, "wan") ? local.wan_enabled ? routeros_interface_ethernet.wan[0].name : routeros_interface_vlan.transit[local.wan_trunk.name].name : null
   comment       = "Allow ${each.value.src} to ${each.value.dst}"
@@ -64,6 +65,10 @@ locals {
       ]]),
       flatten([for connection in var.wireguard.allow_connections_to : {
         src = "wireguard"
+        dst = connection
+      }]),
+      flatten([for connection in var.sites.allow_connections_to : {
+        src = "sites"
         dst = connection
       }])
     ]) : "${item.src}/${item.dst}" => item
