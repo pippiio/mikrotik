@@ -157,6 +157,59 @@ module "mikrotik" {
 }
 ```
 
+### Example Config for two Routers connected via site-to-site VPN
+
+This example configures two MikroTik routers in separate locations, each managing their own local networks, connected to each other over a site-to-site WireGuard VPN.
+
+Both routers are managed from the same Terraform root. Each module instance outputs its `site_public_key`, which is cross-wired into the other's `remote_public_key`. Terraform resolves the dependency automatically across module outputs.
+
+Site A is a router with a WAN connection and a management VLAN. Site B is a router with a WAN connection and a kube VLAN. The `sites` block on each router allows its local networks to reach the other site through a shared `wg-sites` tunnel. Both sites also run independent WireGuard access for remote users.
+
+```terraform
+module "site_a" {
+  source = "git@github.com:pippiio/mikrotik"
+
+  admin_ip = "192.168.89.1"
+
+  wan = {
+    interface = "sfp-sfpplus4"
+    address   = "1.2.3.4/29"
+    gateway   = "1.2.3.3"
+    speed     = "1G-baseX"
+  }
+
+  vlans = {
+    management = {
+      id   = 10
+      cidr = "10.10.8.0/24"
+      interfaces = [
+        "ether1",
+        "ether2",
+      ]
+      allow_connections_to = ["wan"]
+    }
+  }
+
+  sites = {
+    cidr                 = "172.31.0.0/24"
+    allow_connections_to = ["management"]
+    peers = {
+      site_b = {
+        endpoint          = "2.3.4.5"
+        address           = "172.31.0.2"
+        remote_cidrs      = ["10.20.8.0/24"]
+        remote_public_key = "<Public Key from Site B>"
+      }
+    }
+  }
+}
+
+output "site_a_wireguard_public_key" {
+  value     = module.site_a.site_public_key
+  sensitive = true
+}
+```
+
 ## First Setup on new RouterOS machine
 
 ### 1. Prepare the local network interface
@@ -217,7 +270,7 @@ Set an admin IP address like `192.168.88.1` on the ETH/Boot interface.
 Example using `ether13`:
 
 ```routeros
-/ip address add address=192.168.89.1/24 interface=ether1
+/ip address add address=192.168.89.1/24 interface=ether13
 ```
 
 Verify the IP address:
