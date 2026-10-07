@@ -49,6 +49,44 @@ variable "wireguard" {
   }
 }
 
+variable "bgp" {
+  type = object({
+    as        = number
+    router_id = optional(string)
+    peers = optional(map(object({
+      vlan            = optional(string)
+      trunk           = optional(string)
+      remote_as       = number
+      accept_prefixes = optional(list(string), [])
+      expose = optional(object({
+        address_range = string
+        ports         = list(number)
+        protocol      = optional(string, "tcp")
+      }), null)
+    })), {})
+  })
+
+  default = null
+
+  validation {
+    condition = var.bgp == null ? true : alltrue([
+      for peer in var.bgp.peers : (peer.vlan != null) != (peer.trunk != null)
+    ])
+    error_message = "Each bgp peer must set exactly one of `vlan` (a dynamic, listening peer group) or `trunk` (a static, point-to-point peer)."
+  }
+}
+
+variable "exposed_services" {
+  type = map(object({
+    gateway   = string
+    addresses = list(string)
+    ports     = list(number)
+    protocol  = optional(string, "tcp")
+  }))
+
+  default = {}
+}
+
 variable "trunks" {
   type = map(object({
     id          = number
