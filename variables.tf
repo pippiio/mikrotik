@@ -49,6 +49,36 @@ variable "wireguard" {
   }
 }
 
+variable "bgp" {
+  type = object({
+    as        = number
+    router_id = optional(string)
+    peers = optional(map(object({
+      vlan            = string
+      remote_as       = number
+      accept_prefixes = optional(list(string), [])
+      expose = optional(object({
+        address_range = string
+        ports         = list(number)
+        protocol      = optional(string, "tcp")
+      }), null)
+    })), {})
+  })
+
+  default = null
+}
+
+variable "exposed_services" {
+  type = map(object({
+    gateway   = string
+    addresses = list(string)
+    ports     = list(number)
+    protocol  = optional(string, "tcp")
+  }))
+
+  default = {}
+}
+
 variable "trunks" {
   type = map(object({
     id          = number

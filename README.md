@@ -1,12 +1,28 @@
 # MikroTik Terraform module
 
+## Variables
+
+| Variable | Purpose |
+| --- | --- |
+| `admin_ip` | IP of the admin port created by hand during first setup. |
+| `wan` | Physical WAN uplink: interface, static address, gateway, speed. |
+| `vlans` | Local VLANs: subnet, interfaces, and which other networks they can reach. |
+| `trunks` | Trunk link to another MikroTik device, with the VLANs reachable across it. |
+| `wireguard` | WireGuard VPN: a local tunnel, or `external = true` to treat it as a network provided upstream. |
+| `bgp` | BGP peering (e.g. with Kubernetes nodes) to learn routes, with per-prefix filtering and optional WAN/VPN exposure. |
+| `exposed_services` | Static routes plus WAN/VPN firewall rules for services reachable through another device's gateway. |
+
 ## Example Configs
+
+`bgp` and `exposed_services` are two halves of one pattern: a device that learns routes dynamically (e.g. a switch peering with Kubernetes nodes to learn LoadBalancer IPs via Cilium's BGP control plane) and a device that exposes those same addresses to the outside world (e.g. the upstream router, which has the physical WAN and VPN interfaces). `bgp` doesn't know about WAN/VPN exposure directly — the router needs its own static route to the addresses (via the switch's gateway) before `exposed_services` can allow traffic to them, so both examples below need to agree on the same address range.
 
 ### Example Config for Router connected together with switch
 
 This example uses the MikroTik module to configure a router with a static WAN connection, local management VLAN, switch trunk, kube VLAN, and WireGuard access.
 
 The WAN is connected on sfp-sfpplus4 with a static public IP and gateway. Local devices are placed on the management VLAN across the Ethernet ports. Two SFP+ ports connect to a downstream switch trunk, which provides access to the kube VLAN. WireGuard creates a remote-access network and allows VPN clients to reach WAN, management, and kube networks.
+
+`exposed_services` routes traffic for a Kubernetes LoadBalancer pool through the switch (`172.16.99.2`, the switch's side of the trunk) and allows WAN and WireGuard traffic in to it on ports 80/443. This only works if the switch is actually learning and accepting routes for that same pool — see the `bgp` block in the switch example below.
 
 ```terraform
 module "mikrotik" {
@@ -80,6 +96,17 @@ module "mikrotik" {
       "switch/kube",
     ]
   }
+
+  exposed_services = {
+    "k8s-lb-pool" = {
+      gateway = "172.16.99.2" # the switch's transit address
+      addresses = [
+        "1.2.3.5",
+        "1.2.3.6",
+      ]
+      ports = [80, 443]
+    }
+  }
 }
 
 output "wireguard_client_configs" {
@@ -95,6 +122,8 @@ This example configures a MikroTik device connected upstream to another router o
 The upstream router provides the management and wireguard VLANs across the trunk. This device exposes the local kube VLAN on ether1 through ether8, using subnet 10.20.8.0/24. The kube network is allowed to reach the upstream WAN, while management and WireGuard traffic from the upstream router are allowed to reach kube.
 
 WireGuard is marked as external, meaning this device does not terminate the VPN itself. It treats WireGuard as a network provided by the upstream router.
+
+`bgp` peers with any node in the kube VLAN as AS 65020, learning routes dynamically (`listen = true`, `connect = false`, so the switch waits for nodes to connect rather than dialing out). `accept_prefixes` is a safety filter: only `/32` routes within `1.2.3.0/29` are accepted via BGP, everything else is rejected, so a misbehaving peer can't inject arbitrary routes. `expose` then allows that same pool in from the upstream trunk (treated as the WAN side here, since `wan = true` on this trunk) on ports 80/443 — this is the switch-side half of the `exposed_services` pattern shown in the router example above.
 
 ```terraform
 module "mikrotik" {
@@ -152,6 +181,22 @@ module "mikrotik" {
         "router/wireguard",
         "router/management"
       ]
+    }
+  }
+
+  bgp = {
+    as        = 65000
+    router_id = "10.20.8.1"
+    peers = {
+      "k8s-nodes" = {
+        vlan            = "kube"
+        remote_as       = 65020
+        accept_prefixes = ["1.2.3.0/29"]
+        expose = {
+          address_range = "1.2.3.5-1.2.3.6"
+          ports         = [80, 443]
+        }
+      }
     }
   }
 }
