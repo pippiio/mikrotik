@@ -45,16 +45,22 @@ resource "routeros_routing_bgp_connection" "peer" {
   name     = each.key
   instance = routeros_routing_bgp_instance.this[0].name
   as       = tostring(var.bgp.as)
-  listen   = true
-  connect  = false
+  # A vlan peer is a dynamic group of potential neighbors (e.g. any k8s node
+  # in the subnet), so this device only listens passively - there's no
+  # single address to dial. A trunk peer is a single known neighbor on a
+  # direct link, so this device both listens and dials out: whichever side
+  # connects first establishes the session, and it works regardless of
+  # which side's config gets applied first.
+  listen  = true
+  connect = each.value.trunk != null
 
   local {
     role    = each.value.remote_as == var.bgp.as ? "ibgp" : "ebgp"
-    address = cidrhost(var.vlans[each.value.vlan].cidr, 1)
+    address = each.value.trunk != null ? var.trunks[each.value.trunk].src_address : cidrhost(var.vlans[each.value.vlan].cidr, 1)
   }
 
   remote {
-    address = var.vlans[each.value.vlan].cidr
+    address = each.value.trunk != null ? var.trunks[each.value.trunk].dst_address : var.vlans[each.value.vlan].cidr
     as      = tostring(each.value.remote_as)
   }
 

@@ -61,6 +61,20 @@ resource "routeros_ip_firewall_filter" "bgp_expose" {
   place_before = routeros_ip_firewall_filter.forward_drop_all.id
 }
 
+resource "routeros_ip_firewall_filter" "bgp_expose_wireguard" {
+  for_each = local.wg_enabled ? local.bgp_exposures : {}
+
+  chain        = "forward"
+  action       = "accept"
+  in_interface = routeros_interface_wireguard.wg[0].name
+  protocol     = each.value.protocol
+  dst_address  = each.value.address_range
+  dst_port     = join(",", each.value.ports)
+  comment      = "Allow wireguard to ${each.key}"
+
+  place_before = routeros_ip_firewall_filter.forward_drop_all.id
+}
+
 resource "routeros_ip_firewall_filter" "exposed_service_wan" {
   for_each = local.wan_enabled ? local.exposed_service_hosts : {}
 

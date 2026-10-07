@@ -9,12 +9,12 @@
 | `vlans` | Local VLANs: subnet, interfaces, and which other networks they can reach. |
 | `trunks` | Trunk link to another MikroTik device, with the VLANs reachable across it. |
 | `wireguard` | WireGuard VPN: a local tunnel, or `external = true` to treat it as a network provided upstream. |
-| `bgp` | BGP peering (e.g. with Kubernetes nodes) to learn routes, with per-prefix filtering and optional WAN/VPN exposure. |
-| `exposed_services` | Static routes plus WAN/VPN firewall rules for services reachable through another device's gateway. |
+| `bgp` | BGP peering to learn routes, with per-prefix filtering and optional WAN/VPN exposure. Each peer is either a `vlan` (a dynamic group of neighbors, e.g. any Kubernetes node in a subnet) or a `trunk` (a single known neighbor on a direct link, e.g. an upstream router), never both. |
+| `exposed_services` | Expose services to WAN and VPN through static routes and firewall rules. This allows exposing services that don't support BGP. |
 
 ## Example Configs
 
-`bgp` and `exposed_services` are two halves of one pattern: a device that learns routes dynamically (e.g. a switch peering with Kubernetes nodes to learn LoadBalancer IPs via Cilium's BGP control plane) and a device that exposes those same addresses to the outside world (e.g. the upstream router, which has the physical WAN and VPN interfaces). `bgp` doesn't know about WAN/VPN exposure directly — the router needs its own static route to the addresses (via the switch's gateway) before `exposed_services` can allow traffic to them, so both examples below need to agree on the same address range.
+The two examples below show a complete chain: Kubernetes nodes advertise LoadBalancer IPs over BGP to the switch (`bgp` with a `vlan` peer), the switch re-advertises those same routes to the router over their trunk (`bgp` with a `trunk` peer on both ends — this is plain BGP route propagation, nothing module-specific), and the router allows WAN/VPN traffic in to them (`expose` on that same peer). BGP only carries routes, not ports, so `expose`'s ports/protocol still have to be declared explicitly and kept in sync with reality — the addresses are the only part that's actually dynamic. If a device doesn't speak BGP at all, `exposed_services` covers the same WAN/VPN exposure for a manually-maintained address list instead.
 
 ### Example Config for Router connected together with switch
 
@@ -22,7 +22,7 @@ This example uses the MikroTik module to configure a router with a static WAN co
 
 The WAN is connected on sfp-sfpplus4 with a static public IP and gateway. Local devices are placed on the management VLAN across the Ethernet ports. Two SFP+ ports connect to a downstream switch trunk, which provides access to the kube VLAN. WireGuard creates a remote-access network and allows VPN clients to reach WAN, management, and kube networks.
 
-`exposed_services` routes traffic for a Kubernetes LoadBalancer pool through the switch (`172.16.99.2`, the switch's side of the trunk) and allows WAN and WireGuard traffic in to it on ports 80/443. This only works if the switch is actually learning and accepting routes for that same pool — see the `bgp` block in the switch example below.
+`bgp` peers with the switch over their trunk (AS 65010 here, vs. the switch's AS 65000) to learn routes for a Kubernetes LoadBalancer pool, rather than relying on a static route. `trunk = "switch"` makes this a direct, point-to-point session: both sides dial out *and* listen, so whichever side applies first still succeeds in establishing the connection. `accept_prefixes` mirrors the switch's own filter, so the router only accepts `/32` routes within the known pool even if the switch ever sent more. `expose` then allows that pool in from WAN and WireGuard on ports 80/443 — this only works if the switch is actually learning and re-advertising routes for that same pool, which is the `bgp` block in the switch example below.
 
 ```terraform
 module "mikrotik" {
@@ -97,14 +97,19 @@ module "mikrotik" {
     ]
   }
 
-  exposed_services = {
-    "k8s-lb-pool" = {
-      gateway = "172.16.99.2" # the switch's transit address
-      addresses = [
-        "1.2.3.5",
-        "1.2.3.6",
-      ]
-      ports = [80, 443]
+  bgp = {
+    as        = 65010
+    router_id = "172.16.99.1" # this device's side of the trunk
+    peers = {
+      "switch-downlink" = {
+        trunk           = "switch"
+        remote_as       = 65000
+        accept_prefixes = ["1.2.3.0/29"]
+        expose = {
+          address_range = "1.2.3.5-1.2.3.6"
+          ports         = [80, 443]
+        }
+      }
     }
   }
 }
@@ -123,7 +128,9 @@ The upstream router provides the management and wireguard VLANs across the trunk
 
 WireGuard is marked as external, meaning this device does not terminate the VPN itself. It treats WireGuard as a network provided by the upstream router.
 
-`bgp` peers with any node in the kube VLAN as AS 65020, learning routes dynamically (`listen = true`, `connect = false`, so the switch waits for nodes to connect rather than dialing out). `accept_prefixes` is a safety filter: only `/32` routes within `1.2.3.0/29` are accepted via BGP, everything else is rejected, so a misbehaving peer can't inject arbitrary routes. `expose` then allows that same pool in from the upstream trunk (treated as the WAN side here, since `wan = true` on this trunk) on ports 80/443 — this is the switch-side half of the `exposed_services` pattern shown in the router example above.
+`bgp` has two peers here. `k8s-nodes` peers with any node in the kube VLAN as AS 65020 — a `vlan` peer, so it only listens passively (`listen = true`, `connect = false`) rather than dialing out, since there's no single address to dial against an entire dynamic subnet. `accept_prefixes` is a safety filter: only `/32` routes within `1.2.3.0/29` are accepted via BGP, everything else is rejected, so a misbehaving peer can't inject arbitrary routes. `expose` then allows that same pool in from the upstream trunk (treated as the WAN side here, since `wan = true` on this trunk) on ports 80/443.
+
+`router-uplink` is a `trunk` peer instead — a single known neighbor (the router, AS 65010) on the other end of the trunk — so it both listens and dials out. It has no `accept_prefixes` or `expose`: this device doesn't need to accept routes *from* the router, it only needs to re-advertise the k8s-nodes pool upstream, which plain BGP does automatically for any route it already holds. That re-advertised route, filtered and exposed on the router's side, is the `bgp` block in the router example above.
 
 ```terraform
 module "mikrotik" {
@@ -196,6 +203,10 @@ module "mikrotik" {
           address_range = "1.2.3.5-1.2.3.6"
           ports         = [80, 443]
         }
+      }
+      "router-uplink" = {
+        trunk     = "router"
+        remote_as = 65010
       }
     }
   }

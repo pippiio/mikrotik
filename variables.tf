@@ -54,7 +54,8 @@ variable "bgp" {
     as        = number
     router_id = optional(string)
     peers = optional(map(object({
-      vlan            = string
+      vlan            = optional(string)
+      trunk           = optional(string)
       remote_as       = number
       accept_prefixes = optional(list(string), [])
       expose = optional(object({
@@ -66,6 +67,13 @@ variable "bgp" {
   })
 
   default = null
+
+  validation {
+    condition = var.bgp == null ? true : alltrue([
+      for peer in var.bgp.peers : (peer.vlan != null) != (peer.trunk != null)
+    ])
+    error_message = "Each bgp peer must set exactly one of `vlan` (a dynamic, listening peer group) or `trunk` (a static, point-to-point peer)."
+  }
 }
 
 variable "exposed_services" {
