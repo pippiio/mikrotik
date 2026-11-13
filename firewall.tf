@@ -47,6 +47,69 @@ resource "routeros_ip_firewall_filter" "transit_allow_wan" {
   place_before = routeros_ip_firewall_filter.forward_drop_all.id
 }
 
+resource "routeros_ip_firewall_filter" "bgp_expose" {
+  for_each = local.bgp_exposures
+
+  chain        = "forward"
+  action       = "accept"
+  in_interface = local.wan_enabled ? routeros_interface_ethernet.wan[0].name : routeros_interface_vlan.transit[local.wan_trunk.name].name
+  protocol     = each.value.protocol
+  dst_address  = each.value.address_range
+  dst_port     = join(",", each.value.ports)
+  comment      = "Allow ${local.wan_enabled ? "wan" : "${local.wan_trunk.name}/wan"} to ${each.key}"
+
+  place_before = routeros_ip_firewall_filter.forward_drop_all.id
+}
+
+resource "routeros_ip_firewall_filter" "bgp_expose_wireguard" {
+  for_each = local.wg_enabled ? local.bgp_exposures : {}
+
+  chain        = "forward"
+  action       = "accept"
+  in_interface = routeros_interface_wireguard.wg[0].name
+  protocol     = each.value.protocol
+  dst_address  = each.value.address_range
+  dst_port     = join(",", each.value.ports)
+  comment      = "Allow wireguard to ${each.key}"
+
+  place_before = routeros_ip_firewall_filter.forward_drop_all.id
+}
+
+resource "routeros_ip_firewall_filter" "exposed_service_wan" {
+  for_each = local.wan_enabled ? local.exposed_service_hosts : {}
+
+  chain        = "forward"
+  action       = "accept"
+  in_interface = routeros_interface_ethernet.wan[0].name
+  protocol     = each.value.protocol
+  dst_address  = "${each.value.address}/32"
+  dst_port     = join(",", each.value.ports)
+  comment      = "Allow wan to ${each.value.comment}"
+
+  place_before = routeros_ip_firewall_filter.forward_drop_all.id
+}
+
+resource "routeros_ip_firewall_filter" "exposed_service_wireguard" {
+  for_each = local.wg_enabled ? local.exposed_service_hosts : {}
+
+  chain        = "forward"
+  action       = "accept"
+  in_interface = routeros_interface_wireguard.wg[0].name
+  protocol     = each.value.protocol
+  dst_address  = "${each.value.address}/32"
+  dst_port     = join(",", each.value.ports)
+  comment      = "Allow wireguard to ${each.value.comment}"
+
+  place_before = routeros_ip_firewall_filter.forward_drop_all.id
+}
+
+locals {
+  bgp_exposures = {
+    for peer_name, peer in local.bgp_peers : peer_name => peer.expose
+    if peer.expose != null
+  }
+}
+
 locals {
   allow_connections = {
     for item in flatten([
